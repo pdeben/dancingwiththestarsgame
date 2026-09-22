@@ -37,7 +37,7 @@ export async function PATCH(req: NextRequest) {
 
   if (action === 'join') {
     const members = { ...group.members, [userId]: { name: userName, avatar: userAvatar, isAdmin: false, joinedAt: Date.now() } }
-    const member_ids = [...new Set([...group.member_ids, userId])]
+    const member_ids = Array.from(new Set([...group.member_ids, userId]))
     const { data } = await supabaseAdmin.from('groups').update({ members, member_ids }).eq('code', code).select().single()
     return NextResponse.json(data)
   }
