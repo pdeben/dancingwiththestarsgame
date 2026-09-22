@@ -186,7 +186,7 @@ export default function App() {
     setSyncing(false); setTimeout(()=>setSyncMsg(''),5000)
   }
 
-  const alive=Object.keys(admin.eliminated||{}).length?PAIRS.filter(p=>!admin.eliminated[p.id]):PAIRS
+  const alive=PAIRS.filter(p=>!admin.eliminated[p.id])
   const dName=(uid:string)=>openGroup?.members[uid]?.name||(uid===myId?myName:'?')
   const dColor=(uid:string)=>openGroup?.members[uid]?.color||COLORS[uid.charCodeAt(0)%COLORS.length]
 
@@ -217,13 +217,13 @@ export default function App() {
       {myPicksTab==='preseason'&&<>
         {!locked?<>
           <div className="slabel">🔝 Final Four <span className="badge b-blue" style={{marginLeft:4}}>{PTS.f4} pts each</span></div>
-          <div style={{fontSize:11,color:'var(--muted)',marginBottom:10}}>{myPicks.final4?.length||0}/4 picked</div>
+          <div style={{fontSize:11,color:'var(--muted)',marginBottom:10}}>Pick 4 dancers you think make the finale. {myPicks.final4?.length||0}/4 picked</div>
           {PAIRS.map(p=>{const inF4=myPicks.final4?.includes(p.id);const full=(myPicks.final4?.length||0)>=4&&!inF4
-            return <div key={p.id} className={`popt ${inF4?'sel-f4':''}`} onClick={async()=>{
-              if(full){showToast('Final 4 is full',true);return}
+            return <div key={p.id} className={`popt ${inF4?'sel-f4':''}`} onClick={()=>{
+              if(full){showToast('Final 4 is full — remove one first',true);return}
               const f4=inF4?myPicks.final4.filter((x:number)=>x!==p.id):[...(myPicks.final4||[]),p.id]
               const winner=inF4&&myPicks.winner===p.id?null:myPicks.winner
-              await savePicks({final4:f4,winner})
+              setMyPicks(mp=>({...mp,final4:f4,winner}))
             }}>
               <div className="pcheck">{inF4?'✓':''}</div>
               <div style={{flex:1}}><div style={{fontSize:13,fontWeight:600}}>{p.celeb}</div><div style={{fontSize:10,color:'var(--muted)'}}>{p.pro}</div></div>
@@ -234,12 +234,18 @@ export default function App() {
             <div className="slabel" style={{marginTop:16}}>🏅 Season Winner <span className="badge b-gold" style={{marginLeft:4}}>{PTS.winner} pts</span></div>
             <div style={{fontSize:11,color:'var(--muted)',marginBottom:10}}>Must be one of your Final Four</div>
             {(myPicks.final4||[]).map((pairId:number)=>{const p=pairById(pairId)!;const isW=myPicks.winner===pairId
-              return <div key={pairId} className={`popt ${isW?'sel-win':''}`} onClick={async()=>savePicks({winner:isW?null:pairId})}>
+              return <div key={pairId} className={`popt ${isW?'sel-win':''}`} onClick={()=>{
+                setMyPicks(mp=>({...mp,winner:isW?null:pairId}))
+              }}>
                 <div className="pcheck">{isW?'★':''}</div>
                 <div style={{flex:1}}><div style={{fontSize:13,fontWeight:600}}>{p.celeb}</div><div style={{fontSize:10,color:'var(--muted)'}}>{p.pro}</div></div>
                 {isW&&<span className="badge b-gold">My Winner</span>}
               </div>})}
           </>}
+          {(myPicks.final4?.length||0)>0&&<button className="btn btn-gold btn-full" style={{marginTop:14}} onClick={async()=>{
+            await savePicks({final4:myPicks.final4,winner:myPicks.winner})
+            showToast('Preseason picks saved! ✓')
+          }}>Save Preseason Picks</button>}
         </>:<>
           <div className="banner" style={{background:'var(--card2)',border:'1px solid var(--border)'}}><div style={{fontSize:13,fontWeight:700,color:'var(--muted)'}}>🔒 Picks Locked</div></div>
           <div className="card"><div className="card-body">
@@ -278,9 +284,15 @@ export default function App() {
                 {isPicked&&<span className="badge b-rose">My Pick</span>}
               </div>
             </div>})}
-          {myPicks.weekly?.[w]&&<div style={{fontSize:11,color:'var(--muted)',textAlign:'center',marginTop:8}}>
-            Picked <strong style={{color:'var(--rose)'}}>{pairById(myPicks.weekly[w])?.celeb}</strong> · <span style={{cursor:'pointer',textDecoration:'underline'}} onClick={async()=>{const weekly={...myPicks.weekly};delete weekly[w];await savePicks({weekly})}}>change</span>
-          </div>}
+          {myPicks.weekly?.[w]&&<>
+            <button className="btn btn-gold btn-full" style={{marginTop:10}} onClick={async()=>{
+              await savePicks({weekly:myPicks.weekly})
+              showToast('Week '+w+' pick saved! ✓')
+            }}>Save Week {w} Pick</button>
+            <div style={{fontSize:11,color:'var(--muted)',textAlign:'center',marginTop:8}}>
+              Picked <strong style={{color:'var(--rose)'}}>{pairById(myPicks.weekly[w])?.celeb}</strong> · <span style={{cursor:'pointer',textDecoration:'underline'}} onClick={()=>{const weekly={...myPicks.weekly};delete weekly[w];setMyPicks(mp=>({...mp,weekly}))}}>change</span>
+            </div>
+          </>}
         </>}
       </>}
       {myPicksTab==='score'&&<>
