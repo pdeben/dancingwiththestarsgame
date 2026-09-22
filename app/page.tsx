@@ -391,7 +391,7 @@ export default function App() {
                 <div style={{fontSize:10,fontWeight:700,color:type==='Correct'?'var(--green)':type==='Wrong'?'var(--rose)':'var(--muted)',marginBottom:4}}>{type==='Correct'?`✓ CORRECT +${PTS.elim}pts`:type==='Wrong'?'✗ WRONG':'NO PICK'}</div>
                 <div style={{display:'flex',flexWrap:'wrap',gap:5}}>
                   {filtered.map(p => {
-                    const name = openGroup?.members[p.user_id]?.name || (p.user_id===user.id?myName:'?')
+                    const name = openGroup?.members[p.user_id]?.name || (p.user_id===user?.id?myName:'?')
                     const wrongPick = type==='Wrong' ? pairById(p.weekly?.[wk]) : null
                     return <span key={p.user_id} className={`badge ${type==='Correct'?'b-green':type==='Wrong'?'b-rose':'b-muted'}`}>{name}{wrongPick?` (${wrongPick.celeb})`:''}</span>
                   })}
